@@ -629,95 +629,117 @@ const Steps = ({
 // Ratingskala (S&P/Fitch). ig = investment grade, ellers junk.
 const RATINGS = ["AAA", "AA+", "AA", "AA−", "A+", "A", "A−", "BBB+", "BBB", "BBB−", "BB+", "BB", "BB−", "B+", "B", "B−", "CCC+", "CCC", "CCC−", "CC", "C", "D"];
 const IG_SET = new Set(["AAA", "AA+", "AA", "AA−", "A+", "A", "A−", "BBB+", "BBB", "BBB−"]);
-// Finere kvalitetstrinn per rating: tier-nøkkel + investment grade-flagg.
+// Finere kvalitetstrinn per rating: tier-nøkkel + investment grade-flagg + fargenivå.
 const RATING_INFO = {
   "AAA": {
     tier: "rtProfil",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "AA+": {
     tier: "rtHoy",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "AA": {
     tier: "rtHoy",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "AA−": {
     tier: "rtHoy",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "A+": {
     tier: "rtOvreMid",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "A": {
     tier: "rtOvreMid",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "A−": {
     tier: "rtOvreMid",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "BBB+": {
     tier: "rtNedreMid",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "BBB": {
     tier: "rtNedreMid",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "BBB−": {
     tier: "rtNedreMid",
-    ig: true
+    ig: true,
+    tone: "ig"
   },
   "BB+": {
     tier: "rtSpekulativ",
-    ig: false
+    ig: false,
+    tone: "amber"
   },
   "BB": {
     tier: "rtSpekulativ",
-    ig: false
+    ig: false,
+    tone: "amber"
   },
   "BB−": {
     tier: "rtSpekulativ",
-    ig: false
+    ig: false,
+    tone: "amber"
   },
   "B+": {
     tier: "rtHoySpek",
-    ig: false
+    ig: false,
+    tone: "amber"
   },
   "B": {
     tier: "rtHoySpek",
-    ig: false
+    ig: false,
+    tone: "amber"
   },
   "B−": {
     tier: "rtHoySpek",
-    ig: false
+    ig: false,
+    tone: "amber"
   },
   "CCC+": {
     tier: "rtSvaert",
-    ig: false
+    ig: false,
+    tone: "danger"
   },
   "CCC": {
     tier: "rtSvaert",
-    ig: false
+    ig: false,
+    tone: "danger"
   },
   "CCC−": {
     tier: "rtSvaert",
-    ig: false
+    ig: false,
+    tone: "danger"
   },
   "CC": {
     tier: "rtNaerDefault",
-    ig: false
+    ig: false,
+    tone: "danger"
   },
   "C": {
     tier: "rtNaerDefault",
-    ig: false
+    ig: false,
+    tone: "danger"
   },
   "D": {
     tier: "rtDefault",
-    ig: false
+    ig: false,
+    tone: "danger"
   }
 };
 function BondModule({
@@ -881,7 +903,7 @@ function BondModule({
     key: r,
     value: r
   }, r)))), rating && /*#__PURE__*/React.createElement("div", {
-    className: `fk-rating-badge ${IG_SET.has(rating) ? "fk-ig" : "fk-junk"}`
+    className: `fk-rating-badge fk-${RATING_INFO[rating].tone}`
   }, /*#__PURE__*/React.createElement("span", {
     className: "fk-rating-name"
   }, rating), /*#__PURE__*/React.createElement("span", {
@@ -1516,8 +1538,10 @@ const CSS = `
 .fk-rating-detail{display:flex;flex-direction:column;gap:2px;}
 .fk-rating-class{font-size:13px;font-weight:600;}
 .fk-rating-tier{font-size:12px;opacity:.85;line-height:1.35;}
-.fk-ig{background:#e8f2ec;border:1px solid #b5d6c3;color:var(--premium);}
-.fk-junk{background:#f7e9e5;border:1px solid #e6c3ba;color:var(--discount);}
+.fk-ig,.fk-amber,.fk-danger{border-width:1px;border-style:solid;}
+.fk-ig{background:#e8f2ec;border-color:#b5d6c3;color:var(--premium);}
+.fk-amber{background:#fbefe0;border-color:#e8c99a;color:#9a5b16;}
+.fk-danger{background:#f7e9e5;border-color:#e6c3ba;color:var(--discount);}
 .fk-seg{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden;}
 .fk-seg button{flex:1;font-size:13px;font-weight:500;border:none;background:var(--card);color:var(--muted);
   padding:9px;cursor:pointer;transition:.15s;}
