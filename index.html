@@ -15,7 +15,7 @@
 </head>
 <body>
 <div id="root"><div class="fk-boot">Laster kalkulator…</div></div>
-<script>/* React 18 (UMD, production) */
+<script>
 /**
  * @license React
  * react.production.min.js
@@ -49,7 +49,7 @@ c.useState=function(a){return g.current.useState(a)};c.useSyncExternalStore=func
 })();
 
 </script>
-<script>/* ReactDOM 18 (UMD, production) */
+<script>
 /**
  * @license React
  * react-dom.production.min.js
@@ -319,7 +319,7 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 })();
 
 </script>
-<script>/* Finanskalkulator (forhåndskompilert) */
+<script>
 const {
   useState,
   useMemo
@@ -342,7 +342,8 @@ const T = {
       bond: "Obligasjon",
       ddm: "Aksje (DDM)",
       dcf: "DCF / EV",
-      credit: "Kredittrisiko"
+      credit: "Kredittrisiko",
+      event: "Hendelse"
     },
     lang: "EN",
     // bond
@@ -369,6 +370,20 @@ const T = {
     premium: "Over pari (premium)",
     discount: "Under pari (discount)",
     par: "Til pari (par)",
+    ratingLabel: "Kredittrating",
+    ratingNone: "— velg rating —",
+    ratingClass: "Klassifisering",
+    investmentGrade: "Investment grade",
+    junk: "Junk (high-yield)",
+    rtProfil: "Ypperste kvalitet — minimal kredittrisiko",
+    rtHoy: "Høy kvalitet — svært lav risiko",
+    rtOvreMid: "Øvre middels kvalitet — lav risiko",
+    rtNedreMid: "Nedre middels kvalitet — moderat risiko",
+    rtSpekulativ: "Spekulativ — betydelig usikkerhet",
+    rtHoySpek: "Høyt spekulativ — høy risiko",
+    rtSvaert: "Svært risikofylt — nær mislighold",
+    rtNaerDefault: "Ekstremt risikofylt — mislighold nært forestående",
+    rtDefault: "Mislighold inntruffet",
     // ddm
     d1: "Utbytte neste år (D₁)",
     useGrowthInputs: "Regn vekst fra retention × avkastning",
@@ -405,7 +420,22 @@ const T = {
     resultPromisedYtm: "Lovet YTM",
     resultSpread: "Kredittspread",
     lossRate: "Tapsrate (1 − recovery)",
-    fillIn: "Fyll inn feltene for å regne."
+    fillIn: "Fyll inn feltene for å regne.",
+    // event
+    eventIntro: "Endring i aksjekurs fra en firmahendelse",
+    eventCfs: "Engangs kontantstrømmer per år",
+    eventHint: "Positivt = gevinst · negativt = tap",
+    permChange: "Permanent årlig endring (fra år 1, evig)",
+    firstPermYear: "Første år for permanent endring",
+    eventWacc: "Avkastningskrav / WACC (%)",
+    eventShares: "Antall aksjer (mill.)",
+    startPrice: "Aksjekurs før hendelsen (valgfri)",
+    resultPvEvent: "NV engangs kontantstrømmer",
+    resultPvPerm: "NV permanent endring",
+    resultTotalChange: "Total verdiendring",
+    resultChangePerShare: "Endring per aksje",
+    resultBefore: "Kurs før",
+    resultAfter: "Kurs etter"
   },
   en: {
     title: "Finance Calculator",
@@ -416,7 +446,8 @@ const T = {
       bond: "Bond",
       ddm: "Stock (DDM)",
       dcf: "DCF / EV",
-      credit: "Credit risk"
+      credit: "Credit risk",
+      event: "Event"
     },
     lang: "NO",
     bondSolveFor: "Solve for",
@@ -442,6 +473,20 @@ const T = {
     premium: "Above par (premium)",
     discount: "Below par (discount)",
     par: "At par",
+    ratingLabel: "Credit rating",
+    ratingNone: "— select rating —",
+    ratingClass: "Classification",
+    investmentGrade: "Investment grade",
+    junk: "Junk (high-yield)",
+    rtProfil: "Prime — minimal credit risk",
+    rtHoy: "High grade — very low risk",
+    rtOvreMid: "Upper medium grade — low risk",
+    rtNedreMid: "Lower medium grade — moderate risk",
+    rtSpekulativ: "Speculative — substantial uncertainty",
+    rtHoySpek: "Highly speculative — high risk",
+    rtSvaert: "Very risky — near default",
+    rtNaerDefault: "Extremely risky — default imminent",
+    rtDefault: "In default",
     d1: "Next-year dividend (D₁)",
     useGrowthInputs: "Derive growth from retention × return",
     retention: "Retention rate (0–1)",
@@ -475,7 +520,22 @@ const T = {
     resultPromisedYtm: "Promised YTM",
     resultSpread: "Credit spread",
     lossRate: "Loss rate (1 − recovery)",
-    fillIn: "Fill in the fields to calculate."
+    fillIn: "Fill in the fields to calculate.",
+    // event
+    eventIntro: "Change in share price from a firm event",
+    eventCfs: "One-off cash flows per year",
+    eventHint: "Positive = gain · negative = loss",
+    permChange: "Permanent annual change (from year 1, forever)",
+    firstPermYear: "First year of permanent change",
+    eventWacc: "Cost of capital / WACC (%)",
+    eventShares: "Shares outstanding (millions)",
+    startPrice: "Share price before event (optional)",
+    resultPvEvent: "PV of one-off cash flows",
+    resultPvPerm: "PV of permanent change",
+    resultTotalChange: "Total value change",
+    resultChangePerShare: "Change per share",
+    resultBefore: "Price before",
+    resultAfter: "Price after"
   }
 };
 
@@ -566,6 +626,100 @@ const Steps = ({
 // ============================================================
 //  MODUL: OBLIGASJON
 // ============================================================
+// Ratingskala (S&P/Fitch). ig = investment grade, ellers junk.
+const RATINGS = ["AAA", "AA+", "AA", "AA−", "A+", "A", "A−", "BBB+", "BBB", "BBB−", "BB+", "BB", "BB−", "B+", "B", "B−", "CCC+", "CCC", "CCC−", "CC", "C", "D"];
+const IG_SET = new Set(["AAA", "AA+", "AA", "AA−", "A+", "A", "A−", "BBB+", "BBB", "BBB−"]);
+// Finere kvalitetstrinn per rating: tier-nøkkel + investment grade-flagg.
+const RATING_INFO = {
+  "AAA": {
+    tier: "rtProfil",
+    ig: true
+  },
+  "AA+": {
+    tier: "rtHoy",
+    ig: true
+  },
+  "AA": {
+    tier: "rtHoy",
+    ig: true
+  },
+  "AA−": {
+    tier: "rtHoy",
+    ig: true
+  },
+  "A+": {
+    tier: "rtOvreMid",
+    ig: true
+  },
+  "A": {
+    tier: "rtOvreMid",
+    ig: true
+  },
+  "A−": {
+    tier: "rtOvreMid",
+    ig: true
+  },
+  "BBB+": {
+    tier: "rtNedreMid",
+    ig: true
+  },
+  "BBB": {
+    tier: "rtNedreMid",
+    ig: true
+  },
+  "BBB−": {
+    tier: "rtNedreMid",
+    ig: true
+  },
+  "BB+": {
+    tier: "rtSpekulativ",
+    ig: false
+  },
+  "BB": {
+    tier: "rtSpekulativ",
+    ig: false
+  },
+  "BB−": {
+    tier: "rtSpekulativ",
+    ig: false
+  },
+  "B+": {
+    tier: "rtHoySpek",
+    ig: false
+  },
+  "B": {
+    tier: "rtHoySpek",
+    ig: false
+  },
+  "B−": {
+    tier: "rtHoySpek",
+    ig: false
+  },
+  "CCC+": {
+    tier: "rtSvaert",
+    ig: false
+  },
+  "CCC": {
+    tier: "rtSvaert",
+    ig: false
+  },
+  "CCC−": {
+    tier: "rtSvaert",
+    ig: false
+  },
+  "CC": {
+    tier: "rtNaerDefault",
+    ig: false
+  },
+  "C": {
+    tier: "rtNaerDefault",
+    ig: false
+  },
+  "D": {
+    tier: "rtDefault",
+    ig: false
+  }
+};
 function BondModule({
   t,
   lang,
@@ -575,13 +729,14 @@ function BondModule({
   const [zero, setZero] = useState(false);
   const [semi, setSemi] = useState(false);
   const [callable, setCallable] = useState(false);
+  const [rating, setRating] = useState("");
   const [fv, setFv] = useState("1000");
-  const [coupon, setCoupon] = useState("4");
-  const [yrs, setYrs] = useState("5");
-  const [ytmIn, setYtmIn] = useState("5");
-  const [priceIn, setPriceIn] = useState("970");
-  const [callYrs, setCallYrs] = useState("2");
-  const [callPrice, setCallPrice] = useState("1000");
+  const [coupon, setCoupon] = useState("");
+  const [yrs, setYrs] = useState("");
+  const [ytmIn, setYtmIn] = useState("");
+  const [priceIn, setPriceIn] = useState("");
+  const [callYrs, setCallYrs] = useState("");
+  const [callPrice, setCallPrice] = useState("");
   const calc = useMemo(() => {
     const FV = parseNum(fv);
     const cRate = zero ? 0 : parseNum(coupon) / 100;
@@ -712,7 +867,30 @@ function BondModule({
   }, /*#__PURE__*/React.createElement(NumInput, {
     value: callPrice,
     onChange: setCallPrice
-  })))), /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("label", {
+    className: "fk-field"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-label"
+  }, t.ratingLabel), /*#__PURE__*/React.createElement("select", {
+    className: "fk-input fk-select",
+    value: rating,
+    onChange: e => setRating(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, t.ratingNone), RATINGS.map(r => /*#__PURE__*/React.createElement("option", {
+    key: r,
+    value: r
+  }, r)))), rating && /*#__PURE__*/React.createElement("div", {
+    className: `fk-rating-badge ${IG_SET.has(rating) ? "fk-ig" : "fk-junk"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-rating-name"
+  }, rating), /*#__PURE__*/React.createElement("span", {
+    className: "fk-rating-detail"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-rating-class"
+  }, IG_SET.has(rating) ? t.investmentGrade : t.junk), /*#__PURE__*/React.createElement("span", {
+    className: "fk-rating-tier"
+  }, t[RATING_INFO[rating].tier])))), /*#__PURE__*/React.createElement("div", {
     className: "fk-output"
   }, calc.rows ? calc.rows.map((r, i) => /*#__PURE__*/React.createElement(Result, {
     key: i,
@@ -734,11 +912,11 @@ function DdmModule({
   showSteps
 }) {
   const [useG, setUseG] = useState(true);
-  const [d1, setD1] = useState("2.43");
-  const [ret, setRet] = useState("0.42");
-  const [roe, setRoe] = useState("15");
-  const [gIn, setGIn] = useState("6.3");
-  const [coc, setCoc] = useState("12.2");
+  const [d1, setD1] = useState("");
+  const [ret, setRet] = useState("");
+  const [roe, setRoe] = useState("");
+  const [gIn, setGIn] = useState("");
+  const [coc, setCoc] = useState("");
   const calc = useMemo(() => {
     const D1 = parseNum(d1);
     const rE = parseNum(coc) / 100;
@@ -824,12 +1002,12 @@ function DcfModule({
   lang,
   showSteps
 }) {
-  const [fcfs, setFcfs] = useState(["52.2", "68.7", "77.2", "75.6", "80.5"]);
-  const [wacc, setWacc] = useState("14.9");
-  const [tg, setTg] = useState("4.1");
-  const [debt, setDebt] = useState("306");
-  const [cash, setCash] = useState("0");
-  const [shares, setShares] = useState("42");
+  const [fcfs, setFcfs] = useState(["", "", "", "", ""]);
+  const [wacc, setWacc] = useState("");
+  const [tg, setTg] = useState("");
+  const [debt, setDebt] = useState("");
+  const [cash, setCash] = useState("");
+  const [shares, setShares] = useState("");
   const setFcf = (i, v) => setFcfs(a => a.map((x, j) => j === i ? v : x));
   const addYear = () => setFcfs(a => [...a, ""]);
   const removeYear = () => setFcfs(a => a.length > 1 ? a.slice(0, -1) : a);
@@ -967,11 +1145,11 @@ function CreditModule({
   lang,
   showSteps
 }) {
-  const [fv, setFv] = useState("100");
-  const [price, setPrice] = useState("73");
-  const [yrs, setYrs] = useState("5");
-  const [pDef, setPDef] = useState("50");
-  const [rec, setRec] = useState("90");
+  const [fv, setFv] = useState("1000");
+  const [price, setPrice] = useState("");
+  const [yrs, setYrs] = useState("");
+  const [pDef, setPDef] = useState("");
+  const [rec, setRec] = useState("");
   const [rf, setRf] = useState("");
   const calc = useMemo(() => {
     const FV = parseNum(fv);
@@ -1073,6 +1251,171 @@ function CreditModule({
 }
 
 // ============================================================
+//  MODUL: FIRMAHENDELSE (endring i aksjekurs)
+// ============================================================
+function EventModule({
+  t,
+  lang,
+  showSteps
+}) {
+  const [usePerm, setUsePerm] = useState(false);
+  const [cfs, setCfs] = useState(["", ""]);
+  const [perm, setPerm] = useState("");
+  const [permYear, setPermYear] = useState("");
+  const [wacc, setWacc] = useState("");
+  const [shares, setShares] = useState("");
+  const [startPrice, setStartPrice] = useState("");
+  const setCf = (i, v) => setCfs(a => a.map((x, j) => j === i ? v : x));
+  const addYear = () => setCfs(a => [...a, ""]);
+  const removeYear = () => setCfs(a => a.length > 1 ? a.slice(0, -1) : a);
+  const calc = useMemo(() => {
+    const r = parseNum(wacc) / 100;
+    const sh = parseNum(shares);
+    const steps = [];
+    if (!Number.isFinite(r)) return {
+      steps
+    };
+
+    // NV av engangs kontantstrømmer (år 1..N)
+    let pvOnce = 0;
+    let anyCf = false;
+    cfs.forEach((v, i) => {
+      const cf = parseNum(v);
+      if (Number.isFinite(cf) && cf !== 0) {
+        pvOnce += cf / Math.pow(1 + r, i + 1);
+        anyCf = true;
+      }
+    });
+    if (anyCf) steps.push(`NV engangs kontantstrømmer neddiskontert med ${fmt(parseNum(wacc), 2, lang)} % = <b>${fmt(pvOnce, 2, lang)}</b>`);
+
+    // NV av permanent årlig endring (perpetuitet fra permYear)
+    let pvPerm = 0;
+    const permVal = parseNum(perm);
+    if (usePerm && Number.isFinite(permVal) && permVal !== 0 && r > 0) {
+      const startY = Math.max(1, parseNum(permYear) || 1);
+      const perpAtStart = permVal / r; // verdi ett år før første betaling
+      pvPerm = perpAtStart / Math.pow(1 + r, startY - 1);
+      steps.push(`Permanent endring som perpetuitet: ${fmt(permVal, 2, lang)} / ${fmt(r, 4, lang)} = ${fmt(perpAtStart, 2, lang)}, neddiskontert til år 0 = <b>${fmt(pvPerm, 2, lang)}</b>`);
+    }
+    const totalChange = pvOnce + pvPerm;
+    if (!anyCf && pvPerm === 0) return {
+      steps: []
+    };
+    const rows = [];
+    if (anyCf) rows.push({
+      label: t.resultPvEvent,
+      value: fmt(pvOnce, 2, lang)
+    });
+    if (pvPerm !== 0) rows.push({
+      label: t.resultPvPerm,
+      value: fmt(pvPerm, 2, lang)
+    });
+    rows.push({
+      label: t.resultTotalChange,
+      value: fmt(totalChange, 2, lang)
+    });
+    if (Number.isFinite(sh) && sh > 0) {
+      const perShare = totalChange / sh;
+      steps.push(`Endring per aksje = ${fmt(totalChange, 2, lang)} / ${fmt(sh, 0, lang)} = <b>${fmt(perShare, 2, lang)}</b>`);
+      rows.push({
+        label: t.resultChangePerShare,
+        value: fmt(perShare, 2, lang),
+        accent: true
+      });
+      const p0 = parseNum(startPrice);
+      if (Number.isFinite(p0)) {
+        rows.push({
+          label: t.resultBefore,
+          value: fmt(p0, 2, lang)
+        });
+        rows.push({
+          label: t.resultAfter,
+          value: fmt(p0 + perShare, 2, lang),
+          accent: true
+        });
+      }
+    }
+    return {
+      steps,
+      rows
+    };
+  }, [cfs, usePerm, perm, permYear, wacc, shares, startPrice, t, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fk-grid"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fk-inputs"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "fk-hint"
+  }, t.eventIntro), /*#__PURE__*/React.createElement("div", {
+    className: "fk-fcf-head"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-label"
+  }, t.eventCfs), /*#__PURE__*/React.createElement("div", {
+    className: "fk-fcf-btns"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: removeYear
+  }, t.removeYear), /*#__PURE__*/React.createElement("button", {
+    onClick: addYear
+  }, t.addYear))), /*#__PURE__*/React.createElement("p", {
+    className: "fk-hint",
+    style: {
+      marginTop: 0
+    }
+  }, t.eventHint), /*#__PURE__*/React.createElement("div", {
+    className: "fk-fcf-list"
+  }, cfs.map((v, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "fk-fcf-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-fcf-yr"
+  }, i + 1), /*#__PURE__*/React.createElement(NumInput, {
+    value: v,
+    onChange: nv => setCf(i, nv)
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "fk-checks"
+  }, /*#__PURE__*/React.createElement("label", null, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: usePerm,
+    onChange: e => setUsePerm(e.target.checked)
+  }), " ", t.permChange)), usePerm && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Field, {
+    label: t.permChange
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    value: perm,
+    onChange: setPerm
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: t.firstPermYear
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    value: permYear,
+    onChange: setPermYear
+  }))), /*#__PURE__*/React.createElement(Field, {
+    label: t.eventWacc
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    value: wacc,
+    onChange: setWacc
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: t.eventShares
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    value: shares,
+    onChange: setShares
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: t.startPrice
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    value: startPrice,
+    onChange: setStartPrice
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "fk-output"
+  }, calc.rows ? calc.rows.map((r, i) => /*#__PURE__*/React.createElement(Result, {
+    key: i,
+    ...r
+  })) : /*#__PURE__*/React.createElement("p", {
+    className: "fk-empty"
+  }, t.fillIn), /*#__PURE__*/React.createElement(Steps, {
+    show: showSteps,
+    lines: calc.steps || []
+  })));
+}
+
+// ============================================================
 //  ROT
 // ============================================================
 function App() {
@@ -1123,6 +1466,10 @@ function App() {
     t: t,
     lang: lang,
     showSteps: showSteps
+  }), tab === "event" && /*#__PURE__*/React.createElement(EventModule, {
+    t: t,
+    lang: lang,
+    showSteps: showSteps
   })), /*#__PURE__*/React.createElement("footer", {
     className: "fk-footer"
   }, t.disclaimer));
@@ -1130,6 +1477,7 @@ function App() {
 
 // ---------- Stil ----------
 const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 .fk-root{
   --ink:#10202b; --paper:#f4f6f5; --card:#ffffff; --line:#d8ded9;
   --accent:#0d5c54; --accent-soft:#e3efeb; --premium:#1b6b46; --discount:#a33a26;
@@ -1162,6 +1510,14 @@ const CSS = `
 .fk-input{font-family:var(--mono);font-size:15px;color:var(--ink);background:var(--card);
   border:1px solid var(--line);border-radius:3px;padding:9px 11px;width:100%;box-sizing:border-box;transition:.15s;}
 .fk-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.fk-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235d6b6a' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.fk-rating-badge{display:flex;align-items:center;gap:12px;border-radius:3px;padding:11px 13px;}
+.fk-rating-name{font-family:var(--mono);font-weight:600;font-size:18px;flex-shrink:0;}
+.fk-rating-detail{display:flex;flex-direction:column;gap:2px;}
+.fk-rating-class{font-size:13px;font-weight:600;}
+.fk-rating-tier{font-size:12px;opacity:.85;line-height:1.35;}
+.fk-ig{background:#e8f2ec;border:1px solid #b5d6c3;color:var(--premium);}
+.fk-junk{background:#f7e9e5;border:1px solid #e6c3ba;color:var(--discount);}
 .fk-seg{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden;}
 .fk-seg button{flex:1;font-size:13px;font-weight:500;border:none;background:var(--card);color:var(--muted);
   padding:9px;cursor:pointer;transition:.15s;}
@@ -1198,8 +1554,8 @@ const CSS = `
 .fk-footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);
   font-size:12px;color:var(--muted);text-align:center;}
 `;
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(/*#__PURE__*/React.createElement(App, null));
+var root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
 </script>
 </body>
 </html>
