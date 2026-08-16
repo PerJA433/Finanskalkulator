@@ -384,6 +384,17 @@ const T = {
     rtSvaert: "Svært risikofylt — nær mislighold",
     rtNaerDefault: "Ekstremt risikofylt — mislighold nært forestående",
     rtDefault: "Mislighold inntruffet",
+    resultEar: "YTM (effektiv årlig, EAR)",
+    resultEarC: "YTC (effektiv årlig, EAR)",
+    ratingYtm: "YTM for denne ratingen (%, valgfri)",
+    ratingRiskfree: "Risikofri rente (%, valgfri)",
+    ratingSpread: "Kredittspread",
+    copy: "Kopier",
+    copied: "Kopiert",
+    sensTitle: "Sensitivitet (EV)",
+    sensWacc: "WACC −1 % / +1 %",
+    sensG: "Terminalvekst −1 % / +1 %",
+    unitNote: "Alle beløp i samme enhet som du taster inn (typisk millioner).",
     // ddm
     d1: "Utbytte neste år (D₁)",
     useGrowthInputs: "Regn vekst fra retention × avkastning",
@@ -487,6 +498,17 @@ const T = {
     rtSvaert: "Very risky — near default",
     rtNaerDefault: "Extremely risky — default imminent",
     rtDefault: "In default",
+    resultEar: "YTM (effective annual, EAR)",
+    resultEarC: "YTC (effective annual, EAR)",
+    ratingYtm: "YTM for this rating (%, optional)",
+    ratingRiskfree: "Risk-free rate (%, optional)",
+    ratingSpread: "Credit spread",
+    copy: "Copy",
+    copied: "Copied",
+    sensTitle: "Sensitivity (EV)",
+    sensWacc: "WACC −1 % / +1 %",
+    sensG: "Terminal growth −1 % / +1 %",
+    unitNote: "All amounts in the same unit you enter (typically millions).",
     d1: "Next-year dividend (D₁)",
     useGrowthInputs: "Derive growth from retention × return",
     retention: "Retention rate (0–1)",
@@ -603,13 +625,32 @@ const Result = ({
   label,
   value,
   accent
-}) => /*#__PURE__*/React.createElement("div", {
-  className: `fk-result ${accent ? "fk-result-accent" : ""}`
-}, /*#__PURE__*/React.createElement("span", {
-  className: "fk-result-label"
-}, label), /*#__PURE__*/React.createElement("span", {
-  className: "fk-result-value"
-}, value));
+}) => {
+  const [copied, setCopied] = useState(false);
+  const doCopy = () => {
+    const raw = String(value).replace(/\s/g, " ").trim();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(raw).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1200);
+      });
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: `fk-result ${accent ? "fk-result-accent" : ""}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-result-label"
+  }, label), /*#__PURE__*/React.createElement("span", {
+    className: "fk-result-right"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-result-value"
+  }, value), /*#__PURE__*/React.createElement("button", {
+    className: "fk-copy",
+    onClick: doCopy,
+    title: "Kopier",
+    "aria-label": "Kopier"
+  }, copied ? "✓" : "⧉")));
+};
 const Steps = ({
   show,
   lines
@@ -752,6 +793,8 @@ function BondModule({
   const [semi, setSemi] = useState(false);
   const [callable, setCallable] = useState(false);
   const [rating, setRating] = useState("");
+  const [ratingYtm, setRatingYtm] = useState("");
+  const [ratingRf, setRatingRf] = useState("");
   const [fv, setFv] = useState("1000");
   const [coupon, setCoupon] = useState("");
   const [yrs, setYrs] = useState("");
@@ -808,6 +851,14 @@ function BondModule({
         value: pct(ytm, 2, lang),
         accent: true
       }];
+      if (semi) {
+        const ear = Math.pow(1 + yPer, pp) - 1;
+        steps.push(`EAR = (1 + ${fmt(yPer, 4, lang)})^${pp} − 1 = <b>${pct(ear, 2, lang)}</b>`);
+        rows.push({
+          label: t.resultEar,
+          value: pct(ear, 2, lang)
+        });
+      }
       if (callable) {
         const Nc = parseNum(callYrs) * pp;
         const CP = parseNum(callPrice);
@@ -820,6 +871,13 @@ function BondModule({
             value: pct(ytc, 2, lang),
             accent: true
           });
+          if (semi) {
+            const earC = Math.pow(1 + yPerC, pp) - 1;
+            rows.push({
+              label: t.resultEarC,
+              value: pct(earC, 2, lang)
+            });
+          }
         }
       }
       return {
@@ -912,7 +970,26 @@ function BondModule({
     className: "fk-rating-class"
   }, IG_SET.has(rating) ? t.investmentGrade : t.junk), /*#__PURE__*/React.createElement("span", {
     className: "fk-rating-tier"
-  }, t[RATING_INFO[rating].tier])))), /*#__PURE__*/React.createElement("div", {
+  }, t[RATING_INFO[rating].tier]))), rating && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Field, {
+    label: t.ratingYtm
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    value: ratingYtm,
+    onChange: setRatingYtm
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: t.ratingRiskfree
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    value: ratingRf,
+    onChange: setRatingRf
+  })), Number.isFinite(parseNum(ratingYtm)) && Number.isFinite(parseNum(ratingRf)) && /*#__PURE__*/React.createElement("div", {
+    className: `fk-rating-badge fk-${RATING_INFO[rating].tone}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "fk-rating-class"
+  }, t.ratingSpread), /*#__PURE__*/React.createElement("span", {
+    className: "fk-rating-name",
+    style: {
+      marginLeft: "auto"
+    }
+  }, pct((parseNum(ratingYtm) - parseNum(ratingRf)) / 100, 2, lang))))), /*#__PURE__*/React.createElement("div", {
     className: "fk-output"
   }, calc.rows ? calc.rows.map((r, i) => /*#__PURE__*/React.createElement(Result, {
     key: i,
@@ -1092,16 +1169,41 @@ function DcfModule({
         accent: true
       });
     }
+
+    // Sensitivitet: EV ved WACC ±1 % og terminalvekst ±1 %
+    let sens = null;
+    if (Number.isFinite(tv)) {
+      const evAt = (rr, gg) => {
+        let p = 0;
+        vals.forEach((v, i) => {
+          p += v / Math.pow(1 + rr, i + 1);
+        });
+        if (rr > gg) {
+          const fn = vals[N - 1] * (1 + gg);
+          p += fn / (rr - gg) / Math.pow(1 + rr, N);
+        }
+        return p;
+      };
+      sens = {
+        waccDown: evAt(r - 0.01, g),
+        waccUp: evAt(r + 0.01, g),
+        gDown: evAt(r, g - 0.01),
+        gUp: evAt(r, g + 0.01)
+      };
+    }
     return {
       steps,
-      rows
+      rows,
+      sens
     };
   }, [fcfs, wacc, tg, debt, cash, shares, t, lang]);
   return /*#__PURE__*/React.createElement("div", {
     className: "fk-grid"
   }, /*#__PURE__*/React.createElement("div", {
     className: "fk-inputs"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "fk-hint"
+  }, t.unitNote), /*#__PURE__*/React.createElement("div", {
     className: "fk-fcf-head"
   }, /*#__PURE__*/React.createElement("span", {
     className: "fk-label"
@@ -1153,7 +1255,19 @@ function DcfModule({
     ...r
   })) : /*#__PURE__*/React.createElement("p", {
     className: "fk-empty"
-  }, t.fillIn), /*#__PURE__*/React.createElement(Steps, {
+  }, t.fillIn), calc.sens && /*#__PURE__*/React.createElement("div", {
+    className: "fk-sens"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fk-sens-title"
+  }, t.sensTitle), /*#__PURE__*/React.createElement("div", {
+    className: "fk-sens-row"
+  }, /*#__PURE__*/React.createElement("span", null, t.sensWacc), /*#__PURE__*/React.createElement("span", {
+    className: "fk-sens-vals"
+  }, fmt(calc.sens.waccDown, 0, lang), " / ", fmt(calc.sens.waccUp, 0, lang))), /*#__PURE__*/React.createElement("div", {
+    className: "fk-sens-row"
+  }, /*#__PURE__*/React.createElement("span", null, t.sensG), /*#__PURE__*/React.createElement("span", {
+    className: "fk-sens-vals"
+  }, fmt(calc.sens.gDown, 0, lang), " / ", fmt(calc.sens.gUp, 0, lang)))), /*#__PURE__*/React.createElement(Steps, {
     show: showSteps,
     lines: calc.steps || []
   })));
@@ -1554,8 +1668,16 @@ const CSS = `
   background:var(--card);border:1px solid var(--line);border-radius:3px;padding:11px 14px;}
 .fk-result-accent{border-color:var(--accent);background:var(--accent-soft);}
 .fk-result-label{font-size:13px;color:var(--muted);}
+.fk-result-right{display:flex;align-items:baseline;gap:8px;}
 .fk-result-value{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--ink);}
 .fk-result-accent .fk-result-value{color:var(--accent);font-size:19px;}
+.fk-copy{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:14px;
+  padding:2px 4px;border-radius:3px;line-height:1;transition:.15s;flex-shrink:0;}
+.fk-copy:hover{color:var(--accent);background:var(--accent-soft);}
+.fk-sens{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:11px 14px;}
+.fk-sens-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;}
+.fk-sens-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0;font-size:12.5px;color:var(--muted);}
+.fk-sens-vals{font-family:var(--mono);color:var(--ink);font-weight:500;}
 .fk-empty,.fk-hint{color:var(--muted);font-size:13px;padding:6px 0;}
 .fk-hint{font-style:italic;}
 .fk-warn{color:var(--discount);font-size:13px;background:#f7e9e5;border:1px solid #e6c3ba;
